@@ -1,0 +1,523 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Patient {
+  IDPatient                   Int                 @id @default(autoincrement())
+  numero_securite_sociale     String
+  Medecin_traitant            String
+  Taille                      Float
+  Poids                       Float
+  Antecedents_chirurgicaux    String
+  medicaments_actuel          String
+  allergies_medicamenteuses   String
+  Traitements_de_longue_duree String
+  allergies                   Boolean
+  vaccin_contre_la_grippe     Boolean
+  utilisateur                 Utilisateur         @relation(fields: [UtilisateurID], references: [IDutilisateur])
+  UtilisateurID               Int
+  DemandeUrgence              DemandeUrgence[]
+  Suivi_Patient               Suivi_Patient?
+  Dossier_Medical             Dossier_Medical?
+  Documents_Patient           Documents_Patient[]
+  Demande_RendezVous          Demande_RendezVous?
+}
+
+model Medecin {
+  IDMedecin        Int                @id @default(autoincrement())
+  Service          Service            @relation(fields: [ServiceID], references: [IDService])
+  ServiceID        Int
+  ProSante         Pro_Sante          @relation(fields: [ProSanteID], references: [ID_pro])
+  ProSanteID       Int
+  Consultation     Consultation[]
+  Teleconsultation Teleconsultation[]
+}
+
+model Dossier_Medical {
+  IDDossierMedical        Int                   @id @default(autoincrement())
+  PatientID               Int                   @unique
+  Ordonnances             String
+  Analyses                String
+  PathologieID            Int
+  TraitementID            Int
+  VoletSyntheseMedicaleID Int
+  CorrespondantID         Int
+  FichierImporteID        Int
+  AntecedentsID           Int
+  RapportAnalyseID        Int
+  PersonneEntourageID     Int 
+  PersonneEntourage       PersonneEntourage     @relation(fields: [PersonneEntourageID], references: [ID_PersonneEntourage])
+  Patient                 Patient               @relation(fields: [PatientID], references: [IDPatient])
+  Pathologie              Pathologie            @relation(fields: [PathologieID], references: [ID])
+  Traitement              Traitement            @relation(fields: [TraitementID], references: [Identifiant])
+  VoletSyntheseMedicale   VoletSyntheseMedicale @relation(fields: [VoletSyntheseMedicaleID], references: [ID])
+  Correspondant           Correspondant         @relation(fields: [CorrespondantID], references: [ID])
+  FichierImporte          FichierImporte        @relation(fields: [FichierImporteID], references: [ID])
+  Antecedents             Antecedents           @relation(fields: [AntecedentsID], references: [ID])
+  RapportAnalyse          RapportAnalyse        @relation(fields: [RapportAnalyseID], references: [ID_rapportAnalyse])
+
+  AllergiesID Int
+  Allergies   Allergies @relation(fields: [AllergiesID], references: [ID_Allergies])
+
+  Consultation Consultation[]
+}
+
+
+model Consultation {
+  ID               Int             @id @default(autoincrement())
+  Date             String
+  PraticienID      Int
+  Motif            String
+  Informations     String
+  OrdonnanceID     Int             @unique
+  Type             String
+  DossierMedicalID Int
+  MedecinID        Int
+  Ordonnance       Ordonnance      @relation(fields: [OrdonnanceID], references: [IDOrdonnance])
+  Analyses         Analyses?       @relation("Consultation_Analyses")
+  Dossier_Medical  Dossier_Medical @relation(fields: [DossierMedicalID], references: [IDDossierMedical])
+  Medecin          Medecin         @relation(fields: [MedecinID], references: [IDMedecin])
+}
+
+
+model Analyses {
+  ID_Analyses       Int          @id @default(autoincrement())
+  Type_analyse      String
+  Date_prescription DateTime
+  Statut            String
+  ConsultationID    Int          @unique
+  Consultation      Consultation @relation("Consultation_Analyses", fields: [ConsultationID], references: [ID])
+  LaboratoireID     Int
+
+  Laboratoire Laboratoire @relation(fields: [LaboratoireID], references: [IDLaboratoire])
+}
+
+model Ordonnance {
+  IDOrdonnance          Int                   @id @default(autoincrement())
+  ConsultationID        Int
+  MedecinPrescripteurID Int
+  ListeMedicaments      String
+  Posologie             String
+  RapportAnalyseID      Int
+  Consultations         Consultation[]
+  MedecinPrescripteur   Pro_Sante             @relation(fields: [MedecinPrescripteurID], references: [ID_pro])
+  Ligne_Commande        Ligne_Commande[]
+  CommandesMedicaments  CommandeMedicaments[]
+}
+
+model RapportAnalyse {
+  ID_rapportAnalyse    Int         @id @default(autoincrement())
+  parametre_analyse    String
+  Valeur_mesuree       String
+  unite_de_mesure      String
+  intervalle_reference String
+  Interpretation       String
+  LaboratoireID        Int
+  Laboratoire          Laboratoire @relation(fields: [LaboratoireID], references: [IDLaboratoire])
+
+  Dossier_Medical Dossier_Medical[]
+}
+
+model Laboratoire {
+  IDLaboratoire  Int              @id @default(autoincrement())
+  Nom            String
+  Adresse        String
+  ProSanteID     Int              @unique
+  Analyses       Analyses[]
+  RapportAnalyse RapportAnalyse[]
+
+  Pro_Sante Pro_Sante @relation(fields: [ProSanteID], references: [ID_pro])
+}
+
+model Document {
+  ID_Document Int       @id @default(autoincrement())
+  Libelle     String
+  Document    String
+  ProID       Int       @unique
+  Pro_sante   Pro_Sante @relation(fields: [ProID], references: [ID_pro])
+}
+
+model Pro_Sante {
+  ID_pro         Int              @id @default(autoincrement())
+  Certificat     Bytes
+  Specialite     String
+  Documents      Document[]
+  Utilisateur    Utilisateur?     @relation(fields: [UtilisateurID], references: [IDutilisateur])
+  UtilisateurID  Int              @unique
+  Equipe_Urgence Equipe_Urgence[]
+  Pro_Centre     Pro_Centre[]
+  Planning       Planning[]
+  Medecin        Medecin[]
+  Laboratoire    Laboratoire?
+  Pro_Equipe     Pro_Equipe[]
+
+  Ordonnances Ordonnance[]
+
+  @@map("Pro_Sante")
+}
+
+model Teleconsultation {
+  IDTeleconsultation Int             @id @default(autoincrement())
+  MedecinID          Int
+  Creneau            String
+  Statut             String
+  CreneauHoraireID   Int
+  Medecin            Medecin         @relation(fields: [MedecinID], references: [IDMedecin])
+  Creneau_horaire    Creneau_horaire @relation(fields: [CreneauHoraireID], references: [ID_Creneau])
+}
+
+model Utilisateur {
+  IDutilisateur      Int                 @id @default(autoincrement())
+  Nom                String
+  Prenom             String
+  Telephone          String
+  adresse_email      String
+  DateNaissance      DateTime
+  Sexe               String
+  Adresse            String
+  Image              Bytes
+  isAdmin            Boolean
+  RoleID             Int
+  Compte_utilisateur Compte_utilisateur?
+  Role               Role?               @relation(fields: [RoleID], references: [IDRole])
+  Disponibilite      Disponibilite[]
+  patients           Patient[]
+  ProSante           Pro_Sante?
+
+  @@map("Utilisateur")
+}
+
+model Compte_utilisateur {
+  IDCompte          Int         @id @default(autoincrement())
+  Pseudo            String
+  MotDePasse        String
+  UtilisateurID     Int         @unique
+  Utilisateur       Utilisateur @relation(fields: [UtilisateurID], references: [IDutilisateur])
+  Message_emetteur  Message[]   @relation("Message_emetteur")
+  Message_recepteur Message[]   @relation("Message_recepteur")
+
+  @@map("Compte_utilisateur")
+}
+
+model Message {
+  IDMessage        Int                @id @default(autoincrement())
+  Contenu          String
+  Date_envoi       String
+  emetteurID       Int                @unique
+  recepteurID      Int                @unique
+  Compte_emetteur  Compte_utilisateur @relation("Message_emetteur", fields: [emetteurID], references: [IDCompte])
+  Compte_recepteur Compte_utilisateur @relation("Message_recepteur", fields: [recepteurID], references: [IDCompte])
+
+  @@map("Message")
+}
+
+model Role {
+  IDRole      Int           @id @default(autoincrement())
+  Libelle     String
+  Utilisateur Utilisateur[]
+}
+
+model Disponibilite {
+  IDDisponibilite   Int             @id @default(autoincrement())
+  Etat              String
+  Date              DateTime
+  Jour              String
+  creneau_horaireID Int
+  utilisateurID     Int
+  Creneau_horaire   Creneau_horaire @relation(fields: [creneau_horaireID], references: [ID_Creneau])
+  Utilisateur       Utilisateur     @relation(fields: [utilisateurID], references: [IDutilisateur])
+  Service           Service[]
+  Planning          Planning[]
+}
+
+model Planning {
+  IDPlanning          Int           @id @default(autoincrement())
+  Pro_santeID         Int
+  CreneauDisponible   Disponibilite @relation(fields: [CreneauDisponibleID], references: [IDDisponibilite])
+  CreneauDisponibleID Int
+  Pro_Sante           Pro_Sante     @relation(fields: [Pro_santeID], references: [ID_pro])
+}
+
+model Service {
+  IDService          Int                  @id @default(autoincrement())
+  Type               String
+  Prix               Float
+  Duree              String
+  Lieu               String
+  DisponibiliteID    Int
+  Disponibilite      Disponibilite        @relation(fields: [DisponibiliteID], references: [IDDisponibilite])
+  Demande_RendezVous Demande_RendezVous[]
+  Panier_demande     Panier_demande[]
+  medecins           Medecin[] 
+}
+
+model Panier_demande {
+  ID_panier Int     @id @default(autoincrement())
+  ServiceID Int
+  FactureID Int
+  Service   Service @relation(fields: [ServiceID], references: [IDService])
+  Facture   Facture @relation(fields: [FactureID], references: [IDFacture])
+}
+
+model Facture {
+  IDFacture        Int              @id @default(autoincrement())
+  Montant          Float
+  Date_facturation DateTime
+  Date_paiement    DateTime
+  Paiement         Paiement         @relation(fields: [PaiementID], references: [IDPaiement])
+  PaiementID       Int
+  Panier_demande   Panier_demande[]
+}
+
+model Paiement {
+  IDPaiement    Int       @id @default(autoincrement())
+  Mode_paiement String
+  Montant       Float
+  Date_paiement DateTime
+  Facture       Facture[]
+}
+
+model Demande_RendezVous {
+  IDDemandeRDV Int     @id @default(autoincrement())
+  PatientID    Int     @unique
+  ServiceID    Int
+  Creanaux     Int
+  Statut       String
+  Patient      Patient @relation(fields: [PatientID], references: [IDPatient])
+  Service      Service @relation(fields: [ServiceID], references: [IDService])
+}
+
+model Documents_Patient {
+  ID_Document Int     @id @default(autoincrement())
+  Nom         String
+  Document    String
+  PatientID   Int
+  Patient     Patient @relation(fields: [PatientID], references: [IDPatient])
+}
+
+model Pathologie {
+  ID              Int               @id @default(autoincrement())
+  Libelle         String
+  Dossier_Medical Dossier_Medical[]
+}
+
+model Traitement {
+  Identifiant     Int               @id @default(autoincrement())
+  Libelle         String
+  Date_debut      DateTime
+  Date_fin        DateTime
+  Dossier_Medical Dossier_Medical[]
+}
+
+model VoletSyntheseMedicale {
+  ID              Int               @id @default(autoincrement())
+  Libelle         String
+  Date            String
+  Contenu         String
+  Dossier_Medical Dossier_Medical[]
+}
+
+model Correspondant {
+  ID              Int               @id @default(autoincrement())
+  Nom             String
+  Prenom          String
+  Specialite      String
+  Contact         String
+  Dossier_Medical Dossier_Medical[]
+}
+
+model PersonneEntourage {
+  ID_PersonneEntourage Int               @id @default(autoincrement())
+  Nom                  String
+  Prenom               String
+  Lien_parente         String
+  Contact              String
+  Dossier_Medical      Dossier_Medical[]
+  PatientID            Int
+}
+
+model FichierImporte {
+  ID               Int               @id @default(autoincrement())
+  Nom              String
+  Type             String
+  Date_importation DateTime
+  Dossier_Medical  Dossier_Medical[]
+}
+
+model Antecedents {
+  ID              Int               @id @default(autoincrement())
+  Libelle         String
+  Dossier_Medical Dossier_Medical[]
+}
+
+model Allergies {
+  ID_Allergies    Int               @id @default(autoincrement())
+  Type            String
+  Libelle         String
+  Dossier_Medical Dossier_Medical[]
+}
+
+model Suivi_Patient {
+  IDSuiviPatient Int      @id @default(autoincrement())
+  PatientID      Int      @unique
+  Patient        Patient  @relation(fields: [PatientID], references: [IDPatient])
+  Alertes        Alerte[]
+}
+
+model DemandeUrgence {
+  IDDemandeUrgence Int            @id @default(autoincrement())
+  PatientID        Int
+  Equipe_urgenceID Int
+  VehiculeID       Int
+  Statut           String
+  DateCreation     DateTime
+  Patient          Patient        @relation(fields: [PatientID], references: [IDPatient])
+  Equipe_Urgence   Equipe_Urgence @relation(fields: [Equipe_urgenceID], references: [IDEquipe])
+  Vehicule         Vehicule       @relation(fields: [VehiculeID], references: [IDVehicule])
+
+  @@map("DemandeUrgence")
+}
+
+model CommandeMedicaments {
+  IDCommandeMedicaments Int              @id @default(autoincrement())
+  OrdonnanceID          Int
+  PharmacieID           Int
+  Statut                String
+  Ordonnance            Ordonnance       @relation(fields: [OrdonnanceID], references: [IDOrdonnance])
+  Pharmacie             Pharmacie        @relation(fields: [PharmacieID], references: [ID_Pharmacie])
+  DateCommande          DateTime
+  Ligne_Commande        Ligne_Commande[]
+}
+
+model Pharmacie {
+  ID_Pharmacie        Int                   @id @default(autoincrement())
+  CommandeMedicaments CommandeMedicaments[]
+}
+
+model Equipe_Urgence {
+  IDEquipe        Int              @id @default(autoincrement())
+  Pro_Equipe      Pro_Equipe[]
+  Demande_urgence DemandeUrgence[]
+  Pro_Sante       Pro_Sante[]
+}
+
+model Pro_Equipe {
+  ID_pro         Int
+  IDEquipe       Int
+  Pro_Sante      Pro_Sante      @relation(fields: [ID_pro], references: [ID_pro])
+  Equipe_Urgence Equipe_Urgence @relation(fields: [IDEquipe], references: [IDEquipe])
+
+  @@id([ID_pro, IDEquipe])
+}
+
+model Pro_Centre {
+  ID_pro    Int
+  ID_Centre Int
+  Pro_Sante Pro_Sante @relation(fields: [ID_pro], references: [ID_pro])
+  Centre    Centre    @relation(fields: [ID_Centre], references: [IDCentre])
+
+  @@id([ID_pro, ID_Centre])
+}
+
+model Centre {
+  IDCentre   Int          @id @default(autoincrement())
+  Nom        String
+  Adresse    String
+  Type       String
+  Vehicule   Vehicule[]
+  Pro_Centre Pro_Centre[]
+}
+
+model Vehicule {
+  IDVehicule             Int                      @id @default(autoincrement())
+  Type                   String
+  Immatriculation        String
+  Etat                   String
+  Statut                 String
+  DateMajEtat            DateTime
+  Disponibilite_Vehicule Disponibilite_Vehicule[]
+  Centre                 Centre                   @relation(fields: [CentreID], references: [IDCentre])
+  CentreID               Int
+  DemandeUrgences        DemandeUrgence[] // Adding the opposite relation field
+
+  @@map("Vehicule")
+}
+
+model Disponibilite_Vehicule {
+  IDDisponibiliteVehicule Int             @id @default(autoincrement())
+  DateDebut               DateTime
+  DateFin                 DateTime
+  VehiculeID              Int
+  Creneau_horaireID       Int
+  Vehicule                Vehicule        @relation(fields: [VehiculeID], references: [IDVehicule])
+  Creneau_horaire         Creneau_horaire @relation(fields: [Creneau_horaireID], references: [ID_Creneau])
+}
+
+model Creneau_horaire  {
+  ID_Creneau             Int                      @id @default(autoincrement())
+  heure_debut            DateTime
+  heure_fin              DateTime
+  Teleconsultation       Teleconsultation[]
+  Disponibilite          Disponibilite[]
+  Disponibilite_Vehicule Disponibilite_Vehicule[]
+}
+
+model Ligne_Commande {
+  ID_Ordonnance       Int
+  ID_Medicaments      Int
+  Qte                 Float
+  Prix                Float
+  Statut              Int
+  FactureID           Int
+  LivraisonID         Int
+  Commande_Medicament CommandeMedicaments @relation(fields: [CommandeID], references: [IDCommandeMedicaments])
+  Facture_Commande    Facture_Commande?   @relation(fields: [FactureID], references: [IDFacture])
+  Livraison           Livraison?          @relation(fields: [LivraisonID], references: [ID_Livraison])
+  CommandeID          Int
+  Ordonnance          Ordonnance          @relation(fields: [ID_Ordonnance], references: [IDOrdonnance])
+
+  @@id([ID_Ordonnance, ID_Medicaments])
+}
+
+model Livraison {
+  ID_Livraison    Int              @id @default(autoincrement())
+  Date_Livraison  DateTime
+  Ligne_Commande  Ligne_Commande[]
+  LigneCommandeID Int
+}
+
+model Facture_Commande {
+  IDFacture         Int                 @id @default(autoincrement())
+  Montant           Float
+  Date_Facturation  DateTime
+  Paiement_Commande Paiement_Commande[]
+  Lignes_Commande   Ligne_Commande[]
+
+  @@map("Facture_Commande")
+}
+
+model Paiement_Commande {
+  ID_Paiement         Int      @id @default(autoincrement())
+  Mode_paiement       String
+  Montant             Float
+  Date_paiement       DateTime
+  Facture_Commande_ID Int?
+
+  Facture_Commande Facture_Commande? @relation(fields: [Facture_Commande_ID], references: [IDFacture])
+
+  @@map("Paiement_Commande")
+}
+
+model Alerte {
+  IDAlerte        Int           @id @default(autoincrement())
+  Message         String
+  Niveau          String
+  Date            DateTime
+  Suivi_PatientID Int
+  Suivi_Patient   Suivi_Patient @relation(fields: [Suivi_PatientID], references: [IDSuiviPatient])
+}
