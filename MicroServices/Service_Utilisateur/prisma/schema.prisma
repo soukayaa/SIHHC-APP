@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model Utilisateur {
+  IDutilisateur      Int                 @id @default(autoincrement())
+  Nom                String
+  Prenom             String
+  Telephone          String
+  adresse_email      String
+  DateNaissance      DateTime
+  Sexe               String
+  Adresse            String
+  Image              Bytes
+  isAdmin            Boolean
+  RoleID             Int
+  Compte_utilisateur Compte_utilisateur?
+  Role               Role?               @relation(fields: [RoleID], references: [IDRole])
+  Disponibilite      Disponibilite[]
+
+
+
+}
+model Disponibilite {
+  IDDisponibilite   Int             @id @default(autoincrement())
+  Etat              String
+  Date              DateTime
+  Jour              String
+  creneau_horaireID Int
+  utilisateurID     Int
+  Creneau_horaire   Creneau_horaire @relation(fields: [creneau_horaireID], references: [ID_Creneau])
+  Utilisateur       Utilisateur     @relation(fields: [utilisateurID], references: [IDutilisateur])
+ 
+}
+model Creneau_horaire  {
+  ID_Creneau             Int                      @id @default(autoincrement())
+  heure_debut            DateTime
+  heure_fin              DateTime
+  Disponibilite          Disponibilite[]
+  
+}
+model Message {
+  IDMessage        Int                @id @default(autoincrement())
+  Contenu          String
+  Date_envoi       String
+  emetteurID       Int                @unique
+  recepteurID      Int                @unique
+  Compte_emetteur  Compte_utilisateur @relation("Message_emetteur", fields: [emetteurID], references: [IDCompte])
+  Compte_recepteur Compte_utilisateur @relation("Message_recepteur", fields: [recepteurID], references: [IDCompte])
+
+  @@map("Message")
+}
+
+model Compte_utilisateur {
+  IDCompte          Int         @id @default(autoincrement())
+  Pseudo            String
+  MotDePasse        String
+  UtilisateurID     Int         @unique
+  Utilisateur       Utilisateur @relation(fields: [UtilisateurID], references: [IDutilisateur])
+  Message_emetteur  Message[]   @relation("Message_emetteur")
+  Message_recepteur Message[]   @relation("Message_recepteur")
+}
+
+model Role {
+  IDRole      Int           @id @default(autoincrement())
+  Libelle     String
+  Utilisateur Utilisateur[]
+}

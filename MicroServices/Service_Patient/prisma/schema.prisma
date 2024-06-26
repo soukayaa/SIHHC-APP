@@ -510,6 +510,7 @@ model Paiement_Commande {
 
   Facture_Commande Facture_Commande? @relation(fields: [Facture_Commande_ID], references: [IDFacture])
 
+
   @@map("Paiement_Commande")
 }
 

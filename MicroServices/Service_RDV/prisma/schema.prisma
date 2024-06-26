@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Demande_RendezVous {
+  IDDemandeRDV Int     @id @default(autoincrement())
+  PatientID    Int     @unique
+  ServiceID    Int
+  Creanaux     Int
+  Statut       String
+
+}
+
+
+model Creneau_horaire  {
+  ID_Creneau             Int                      @id @default(autoincrement())
+  heure_debut            DateTime
+  heure_fin              DateTime
+ 
+  Disponibilite          Disponibilite[]
+  
+}
+model Disponibilite {
+  IDDisponibilite   Int             @id @default(autoincrement())
+  Etat              String
+  Date              DateTime
+  Jour              String
+  creneau_horaireID Int
+  utilisateurID     Int
+  Creneau_horaire   Creneau_horaire @relation(fields: [creneau_horaireID], references: [ID_Creneau])
+  Utilisateur       Utilisateur     @relation(fields: [utilisateurID], references: [IDutilisateur])
+  
+
+}
+model Utilisateur {
+  IDutilisateur      Int                 @id @default(autoincrement())
+  Nom                String
+  Prenom             String
+  Telephone          String
+  adresse_email      String
+  DateNaissance      DateTime
+  Sexe               String
+  Adresse            String
+  Image              Bytes
+  isAdmin            Boolean
+  RoleID             Int
+  
+  Disponibilite      Disponibilite[]
+
+ 
+
+  @@map("Utilisateur")
+}
