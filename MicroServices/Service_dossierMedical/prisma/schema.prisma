@@ -1,0 +1,142 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+model Dossier_Medical {
+  IDDossierMedical        Int                   @id @default(autoincrement())
+  Ordonnances             String
+  Analyses                String
+  PathologieID            Int
+  TraitementID            Int
+  VoletSyntheseMedicaleID Int
+  CorrespondantID         Int
+  FichierImporteID        Int
+  AntecedentsID           Int
+  RapportAnalyseID        Int
+  PersonneEntourageID     Int 
+  PersonneEntourage       PersonneEntourage     @relation(fields: [PersonneEntourageID], references: [ID_PersonneEntourage])
+   
+  Pathologie              Pathologie            @relation(fields: [PathologieID], references: [ID])
+  Traitement              Traitement            @relation(fields: [TraitementID], references: [Identifiant])
+  VoletSyntheseMedicale   VoletSyntheseMedicale @relation(fields: [VoletSyntheseMedicaleID], references: [ID])
+  Correspondant           Correspondant         @relation(fields: [CorrespondantID], references: [ID])
+  FichierImporte          FichierImporte        @relation(fields: [FichierImporteID], references: [ID])
+  Antecedents             Antecedents           @relation(fields: [AntecedentsID], references: [ID])
+  RapportAnalyse          RapportAnalyse        @relation(fields: [RapportAnalyseID], references: [ID_rapportAnalyse])
+
+  AllergiesID Int
+  Allergies   Allergies @relation(fields: [AllergiesID], references: [ID_Allergies])
+
+  Consultation Consultation[]
+}
+model RapportAnalyse {
+  ID_rapportAnalyse    Int         @id @default(autoincrement())
+  parametre_analyse    String
+  Valeur_mesuree       String
+  unite_de_mesure      String
+  intervalle_reference String
+  Interpretation       String
+  LaboratoireID        Int
+  
+
+  Dossier_Medical Dossier_Medical[]
+}
+
+
+model Consultation {
+  ID               Int             @id @default(autoincrement())
+  Date             String
+  PraticienID      Int
+  Motif            String
+  Informations     String
+  OrdonnanceID     Int             @unique
+  Type             String
+  DossierMedicalID Int
+  MedecinID        Int
+  Ordonnance       Ordonnance      @relation(fields: [OrdonnanceID], references: [IDOrdonnance])
+  Analyses         Analyses?       @relation("Consultation_Analyses")
+  Dossier_Medical  Dossier_Medical @relation(fields: [DossierMedicalID], references: [IDDossierMedical])
+  
+}
+model Analyses {
+  ID_Analyses       Int          @id @default(autoincrement())
+  Type_analyse      String
+  Date_prescription DateTime
+  Statut            String
+  ConsultationID    Int          @unique
+  Consultation      Consultation @relation("Consultation_Analyses", fields: [ConsultationID], references: [ID])
+  LaboratoireID     Int
+
+ 
+}
+
+model Ordonnance {
+  IDOrdonnance          Int                   @id @default(autoincrement())
+  ConsultationID        Int
+  MedecinPrescripteurID Int
+  ListeMedicaments      String
+  Posologie             String
+  RapportAnalyseID      Int
+  Consultations         Consultation[]
+
+}
+model Allergies {
+  ID_Allergies    Int               @id @default(autoincrement())
+  Type            String
+  Libelle         String
+  Dossier_Medical Dossier_Medical[]
+}
+model Antecedents {
+  ID              Int               @id @default(autoincrement())
+  Libelle         String
+  Dossier_Medical Dossier_Medical[]
+}
+model FichierImporte {
+  ID               Int               @id @default(autoincrement())
+  Nom              String
+  Type             String
+  Date_importation DateTime
+  Dossier_Medical  Dossier_Medical[]
+}
+model PersonneEntourage {
+  ID_PersonneEntourage Int               @id @default(autoincrement())
+  Nom                  String
+  Prenom               String
+  Lien_parente         String
+  Contact              String
+  Dossier_Medical      Dossier_Medical[]
+  PatientID            Int
+}
+
+model Correspondant {
+  ID              Int               @id @default(autoincrement())
+  Nom             String
+  Prenom          String
+  Specialite      String
+  Contact         String
+  Dossier_Medical Dossier_Medical[]
+}
+model VoletSyntheseMedicale {
+  ID              Int               @id @default(autoincrement())
+  Libelle         String
+  Date            String
+  Contenu         String
+  Dossier_Medical Dossier_Medical[]
+}
+model Traitement {
+  Identifiant     Int               @id @default(autoincrement())
+  Libelle         String
+  Date_debut      DateTime
+  Date_fin        DateTime
+  Dossier_Medical Dossier_Medical[]
+}
+model Pathologie {
+  ID              Int               @id @default(autoincrement())
+  Libelle         String
+  Dossier_Medical Dossier_Medical[]
+}
